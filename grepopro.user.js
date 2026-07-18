@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         GrepoPRO
-// @version      1.0.0
+// @version      1.1.0
 // @match        http://*.grepolis.com/game/*
 // @match        https://*.grepolis.com/game/*
 // @grant        none
@@ -41,6 +41,17 @@
         var farmOn = false, buildOn = false, running = false;
         var modeBase = 300, modeBoost = 600;
         var intv = null;
+
+        function loadState() {
+            try {
+                var d = JSON.parse(localStorage.getItem('gpro_state'));
+                if (d) { farmOn = d.f || false; buildOn = d.b || false; modeBase = d.m || 300; modeBoost = d.o || 600; }
+            } catch(e){}
+        }
+        function saveState() {
+            try { localStorage.setItem('gpro_state', JSON.stringify({f:farmOn, b:buildOn, m:modeBase, o:modeBoost})); } catch(e){}
+        }
+        loadState(); if (farmOn || buildOn) { intv = setInterval(tick, 1000); tick(); }
         var MODES = [['5min',300,600],['10min',600,1200],['15min',900,1800],['20min',1200,2400],['30min',1800,3600],['45min',2700,5400]];
         var PRIORITY = ['farm','lumber','stonemason','ironer','warehouse','docks','barracks','academy','temple','theater','thermal_baths','library','senate','museum','oracle','wall','tower','hideout','market','workshop'];
 
@@ -155,8 +166,8 @@
                     '<div class="gpro_row"><span class="gpro_label">Capitaine</span><span class="gpro_status">'+(cap()?'Oui':'Non')+'</span></div>'+
                     '<div id="gpro_info">'+uw.ITowns.towns.length+' villes</div>'
                 );
-                body.find('.gpro_toggle[data-mod="farm"]').click(function(){ farmOn = !farmOn; if (!farmOn && intv) { clearInterval(intv); intv=null; } else if (farmOn && !intv) { intv=setInterval(tick,1000); tick(); } render(); });
-                body.find('.gpro_btn').click(function(){ modeBase = parseInt($(this).data('b')); modeBoost = parseInt($(this).data('o')); render(); });
+                body.find('.gpro_toggle[data-mod="farm"]').click(function(){ farmOn = !farmOn; saveState(); if (!farmOn && intv) { clearInterval(intv); intv=null; } else if (farmOn && !intv) { intv=setInterval(tick,1000); tick(); } render(); });
+                body.find('.gpro_btn').click(function(){ modeBase = parseInt($(this).data('b')); modeBoost = parseInt($(this).data('o')); saveState(); render(); });
 
             } else {
                 var q = getQueue();
@@ -180,7 +191,7 @@
                     '<div id="gpro_list">'+lh+'</div>'+
                     '<div id="gpro_info">'+uw.ITowns.towns.length+' villes</div>'
                 );
-                body.find('.gpro_toggle[data-mod="build"]').click(function(){ buildOn = !buildOn; if (!buildOn && intv) { clearInterval(intv); intv=null; } else if (buildOn && !intv) { intv=setInterval(tick,3000); tick(); } render(); });
+                body.find('.gpro_toggle[data-mod="build"]').click(function(){ buildOn = !buildOn; saveState(); if (!buildOn && intv) { clearInterval(intv); intv=null; } else if (buildOn && !intv) { intv=setInterval(tick,3000); tick(); } render(); });
             }
         }
 
@@ -200,7 +211,7 @@
             }).then(function() { running = false; render(); }).catch(function() { running = false; render(); });
         }
 
-        var p = $('<div id="gpro_panel"><div id="gpro_header"><b style="color:#ffcc00">GrepoPRO</b><span style="font-size:10px;color:#888">v1.0.0</span></div><div id="gpro_tabs"><span data-t="farm">Farm</span><span data-t="build">Build</span></div><div id="gpro_body"></div></div>');
+        var p = $('<div id="gpro_panel"><div id="gpro_header"><b style="color:#ffcc00">GrepoPRO</b><span style="font-size:10px;color:#888">v1.1.0</span></div><div id="gpro_tabs"><span data-t="farm">Farm</span><span data-t="build">Build</span></div><div id="gpro_body"></div></div>');
         $('body').append(p);
         $('#gpro_tabs span').click(function(){ tab = $(this).data('t'); $('#gpro_tabs span').removeClass('on'); $(this).addClass('on'); render(); });
         $('#gpro_tabs span:first').addClass('on');
